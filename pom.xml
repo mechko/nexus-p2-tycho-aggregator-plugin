@@ -32,6 +32,13 @@
 
   <description>Adds P2 repository support</description>
 
+<repositories>
+    <repository>
+      <id>Forge Group</id>
+      <url>https://repository.sonatype.org/content/groups/forge/</url>
+    </repository>
+</repositories> 
+
   <licenses>
     <license>
       <name>Eclipse Public License</name>
@@ -48,8 +55,8 @@
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-    <nexus.version>2.0-RC2</nexus.version>
-    <capabilities-plugin.version>2.0-RC2</capabilities-plugin.version>
+    <nexus.version>2.0</nexus.version>
+    <capabilities-plugin.version>2.0</capabilities-plugin.version>
     <nexus.plugin.type>nexus-plugin</nexus.plugin.type>
     <arguments />
   </properties>
@@ -95,7 +102,7 @@
     <dependency>
       <groupId>org.sonatype.nexus.plugins</groupId>
       <artifactId>nexus-p2-bridge-plugin</artifactId>
-      <version>2.0-RC2</version>
+      <version>${nexus.version}</version>
       <type>${nexus.plugin.type}</type>
       <scope>provided</scope>
     </dependency>
