@@ -30,10 +30,16 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.PrintWriter;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Scanner;
+
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
@@ -442,13 +448,41 @@ public class DefaultP2RepositoryAggregator
         throws Exception
     {
         final File sourceP2Repository = createTemporaryP2Repository();
+        final Scanner scanner = new Scanner(sourceArtifacts);
         try
         {
-            // copy artifacts to a temp location
-            FileUtils.copyFile( sourceArtifacts, new File( sourceP2Repository, "artifacts.xml" ) );
-
-            artifactRepository.merge( sourceP2Repository.toURI(), destinationP2Repository.toURI() );
-
+        	List<String> lines = new ArrayList<String>();
+        	while (scanner.hasNext()) {
+        		lines.add(scanner.nextLine());
+        	}
+        	
+        	// if there is no proper repository header (like from Tycho builds), we're adding one
+        	if (!lines.get(1).contains("<?artifactRepository")) {
+        		lines.add(1,"<?artifactRepository version='1.1.0'?>");
+        		lines.add(2,"<repository name=\"temporary\" type=\"org.eclipse.equinox.p2.artifact.repository.simpleRepository\" version=\"1\">");
+        		lines.add(3,"<properties size=\"1\"><property name=\"p2.timestamp\" value=\"" + String.valueOf(new Date().getTime()) + "\"/> </properties>");
+        		lines.add(lines.size(), "</repository>");
+        		File tempFile = FileUtils.createTempFile("temporary-p2artifacts", ".xml", sourceP2Repository);
+        		
+        		final PrintWriter writer = new PrintWriter(tempFile);
+        		try {
+        			for (String line : lines) {
+        				logger.debug(line);
+        				writer.println(line);
+        			}
+        			writer.flush();
+        		} finally {
+        			writer.close();
+        		}
+        		// copy content to a temp location
+        		FileUtils.copyFile( tempFile, new File( sourceP2Repository, "artifacts.xml" ) );
+        	} else {
+        		// copy artifacts to a temp location
+        		FileUtils.copyFile( sourceArtifacts, new File( sourceP2Repository, "artifacts.xml" ) );
+        	}
+        	
+        	artifactRepository.merge( sourceP2Repository.toURI(), destinationP2Repository.toURI() );
+        	
             // create a link in /plugins directory back to original jar
             final Collection<InstallableArtifact> installableArtifacts =
                 artifactRepository.getInstallableArtifacts( sourceP2Repository.toURI() );
@@ -466,24 +500,58 @@ public class DefaultP2RepositoryAggregator
         }
         finally
         {
+        	scanner.close();
             deleteDirectory( sourceP2Repository );
         }
     }
 
+    
+    
     private void updateP2Metadata( final Repository repository, final File sourceContent,
                                    final File destinationP2Repository )
         throws Exception
     {
         final File sourceP2Repository = createTemporaryP2Repository();
+        final Scanner scanner = new Scanner(sourceContent);
+        
         try
         {
-            // copy content to a temp location
-            FileUtils.copyFile( sourceContent, new File( sourceP2Repository, "content.xml" ) );
+        	List<String> lines = new ArrayList<String>();
+        	while (scanner.hasNext()) {
+        		lines.add(scanner.nextLine());
+        	}
+        	
+        	// if there is no proper repository header (like from Tycho builds), we're adding one
+        	if (!lines.get(1).contains("<?metadataRepository")) {
+        		lines.add(1,"<?metadataRepository version='1.1.0'?>");
+        		lines.add(2,"<repository name=\"temporary\" type=\"org.eclipse.equinox.internal.p2.metadata.repository.LocalMetadataRepository\" version=\"1\">");
+        		lines.add(3,"<properties size=\"1\"><property name=\"p2.timestamp\" value=\"" + String.valueOf(new Date().getTime()) + "\"/> </properties>");
+        		lines.add(lines.size(), "</repository>");
+        		File tempFile = FileUtils.createTempFile("temporary-p2content", ".xml", sourceP2Repository);
+        		
+        		final PrintWriter writer = new PrintWriter(tempFile);
+        		try {
+        			for (String line : lines) {
+        				logger.debug(line);
+        				writer.println(line);
+        			}
+        			writer.flush();
+        		} finally {
+        			writer.close();
+        		}
+        		// copy content with attached repository header to a temp location
+        		FileUtils.copyFile( tempFile, new File( sourceP2Repository, "content.xml" ) );
 
-            metadataRepository.merge( sourceP2Repository.toURI(), destinationP2Repository.toURI() );
+        	} else {
+        		// copy content to a temp location
+        		FileUtils.copyFile( sourceContent, new File( sourceP2Repository, "content.xml" ) );
+        	}
+        	
+        	metadataRepository.merge( sourceP2Repository.toURI(), destinationP2Repository.toURI() );
         }
         finally
         {
+        	scanner.close();
             deleteDirectory( sourceP2Repository );
         }
     }

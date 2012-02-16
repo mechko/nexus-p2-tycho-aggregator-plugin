@@ -101,7 +101,8 @@ public class P2MetadataEventsInspector
         {
             return false;
         }
-        return path.endsWith( "p2Content.xml" );
+        // Tycho renames 'content.xml' to 'p2metadata.xml' by install
+        return path.endsWith( "p2metadata.xml" );
     }
 
 }

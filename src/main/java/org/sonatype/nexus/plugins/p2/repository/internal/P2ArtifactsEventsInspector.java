@@ -102,7 +102,8 @@ public class P2ArtifactsEventsInspector
         {
             return false;
         }
-        return path.endsWith( "p2Artifacts.xml" );
+        // Tycho creates a lower case _a_rtifacts
+        return path.endsWith( "p2artifacts.xml" );
     }
 
 }
