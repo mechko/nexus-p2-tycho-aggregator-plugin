@@ -65,6 +65,8 @@ import org.sonatype.p2.bridge.model.InstallableUnit;
 import org.sonatype.sisu.resource.scanner.helper.ListenerSupport;
 import org.sonatype.sisu.resource.scanner.scanners.SerialScanner;
 
+import com.ning.http.client.Request;
+
 @Named
 @Singleton
 public class DefaultP2RepositoryAggregator
@@ -447,7 +449,9 @@ public class DefaultP2RepositoryAggregator
                                     final File destinationP2Repository )
         throws Exception
     {
-        final File sourceP2Repository = createTemporaryP2Repository();
+        
+    	logger.debug("Updating p2 artifacts for " + sourceArtifacts.getName());
+    	final File sourceP2Repository = createTemporaryP2Repository();
         final Scanner scanner = new Scanner(sourceArtifacts);
         try
         {
@@ -457,8 +461,7 @@ public class DefaultP2RepositoryAggregator
         	}
         	
         	// if there is no proper repository header (like from Tycho builds), we're adding one
-        	if (!lines.get(1).contains("<?artifactRepository")) {
-        		lines.add(1,"<?artifactRepository version='1.1.0'?>");
+        	if (!lines.get(2).contains("<repository")) {
         		lines.add(2,"<repository name=\"temporary\" type=\"org.eclipse.equinox.p2.artifact.repository.simpleRepository\" version=\"1\">");
         		lines.add(3,"<properties size=\"1\"><property name=\"p2.timestamp\" value=\"" + String.valueOf(new Date().getTime()) + "\"/> </properties>");
         		lines.add(lines.size(), "</repository>");
@@ -486,17 +489,38 @@ public class DefaultP2RepositoryAggregator
             // create a link in /plugins directory back to original jar
             final Collection<InstallableArtifact> installableArtifacts =
                 artifactRepository.getInstallableArtifacts( sourceP2Repository.toURI() );
+            
+            logger.debug("InstallableArtifacts: " + installableArtifacts);
+            
             for ( final InstallableArtifact installableArtifact : installableArtifacts )
             {
-                final String linkPath =
-                    P2_REPOSITORY_ROOT_PATH + "/plugins/" + installableArtifact.getId() + "_"
-                        + installableArtifact.getVersion() + ".jar";
-                if ( installableArtifact.getRepositoryPath() != null )
-                {
-                    final StorageItem bundle = retrieveItem( repository, installableArtifact.getRepositoryPath() );
-                    createLink( repository, bundle, linkPath );
-                }
+            	// do handle plug-ins and features, but not binaries
+            	String subDirectory = null;
+            	if (installableArtifact.getClassifier().equals("osgi.bundle")) {
+            		subDirectory = "/plugins/";
+            	} else if (installableArtifact.getClassifier().equals("org.eclipse.update.feature")) {
+            		subDirectory = "/features/";
+            	} 
+            	
+            	if (subDirectory != null) {
+            		final String linkPath =
+                        P2_REPOSITORY_ROOT_PATH + subDirectory + installableArtifact.getId() + "_"
+                            + installableArtifact.getVersion() + ".jar";
+                    
+            		// We need to create a path to the physical jar in the repository, relative to the repository.
+            		// XXX: This is a hack.
+            		String artifactPath = sourceArtifacts.getPath().replace("-p2artifacts.xml", ".jar"); 
+            		artifactPath = artifactPath.substring(artifactPath.indexOf(repository.getId()) + repository.getId().length(), artifactPath.length());
+            		
+            		logger.debug("New artifact path: " + artifactPath);
+            		
+            		final StorageItem bundle = retrieveItem( repository, artifactPath);
+                    
+            		createLink( repository, bundle, linkPath );
+            	}
             }
+        } catch (Exception e) {
+        	logger.debug("Updating p2 Artifacts failed: " + e.getMessage() );
         }
         finally
         {
