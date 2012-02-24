@@ -29,7 +29,7 @@ public class P2TychoRepositoryAggregatorTaskDescriptor
     implements ScheduledTaskDescriptor
 {
 
-    public static final String ID = "P2RepositoryAggregatorTask";
+    public static final String ID = "P2TychoRepositoryAggregatorTask";
 
     public static final String REPO_OR_GROUP_FIELD_ID = "repositoryId";
 

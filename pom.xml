@@ -74,9 +74,10 @@
     </dependency>
     
      <dependency>
-      <groupId>org.sonatype.nexus</groupId>
-      <artifactId>nexus-api</artifactId>
+      <groupId>org.sonatype.nexus.plugins</groupId>
+      <artifactId>nexus-p2-bridge-plugin</artifactId>
       <version>${nexus.version}</version>
+      <type>${nexus.plugin.type}</type>
       <scope>provided</scope>
     </dependency>
     
@@ -86,41 +87,6 @@
       <version>${nexus.version}</version>
       <scope>provided</scope>
     </dependency>
-
- 	<dependency>
-      <groupId>org.sonatype.p2.bridge</groupId>
-      <artifactId>org.sonatype.p2.bridge.api</artifactId>
-      <version>1.0.8</version>
-      <scope>provided</scope>
-    </dependency>
-    
-     <dependency>
-      <groupId>org.eclipse.tycho</groupId>
-      <artifactId>tycho-metadata-model</artifactId>
-      <version>0.12.0</version>
-      <exclusions>
-        <exclusion>
-          <groupId>org.codehaus.plexus</groupId>
-          <artifactId>plexus-utils</artifactId>
-        </exclusion>
-      </exclusions>
-    </dependency>
-    
-     <dependency>
-      <groupId>org.sonatype.sisu</groupId>
-      <artifactId>sisu-inject-bean</artifactId>
-      <version>2.3.0</version>
-      <scope>provided</scope>
-    </dependency>
-    
-     <dependency>
-      <groupId>org.slf4j</groupId>
-      <artifactId>slf4j-api</artifactId>
-      <version>1.6.1</version>
-      <scope>provided</scope>
-    </dependency>
-    
-    
   </dependencies>
 
   <build>
